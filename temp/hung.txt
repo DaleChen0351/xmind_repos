@@ -1,0 +1,47 @@
+#include<cstdio>
+#include<cstring>
+#include<iostream>
+using namespace std;
+
+#define leftLen 4
+
+
+bool line[10][10];     
+
+int used[10];                      //此次循环中，女孩j是否曾经被匹配过
+int girl[10];                      //女孩的男朋友
+bool find(int x) {                  //为男孩x找女朋友
+    for (int j = 1; j <= leftLen; j++) 
+    { 
+        if (line[x][j] == true && used[j] == false)   //如果 有好感 && 此次新循环里（每次新循环开始时usd为空）女孩j没有被匹配过       
+        {
+            used[j] = 1;                            //标记为匹配
+            if (girl[j] == 0 || find(girl[j]))
+            {                                          //如果 女孩j没有男朋友 || 能为这个男的重新找一个
+                girl[j] = x;                        //把x--->j
+                return true;
+            }
+        }
+    }
+    return false;
+}
+int main()
+{
+    int all = 0;
+    line[1][1] = true; 
+    line[1][2] = true;
+    line[2][1] = true; 
+    line[3][2] = true;  //line赋值
+    line[3][4] = true;
+    line[4][3] = true;
+ 
+    
+    for (int i = 1; i <= leftLen; i++)
+    {
+        memset(used, 0, sizeof(used));        //！！！！警告：每一次清空usd数组 
+        if (find(i)) all += 1;
+    }
+    for (int i = 1; i <= leftLen; i++)
+        printf("%d---%d ", girl[i], i);
+    return 0;
+}
