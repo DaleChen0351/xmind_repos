@@ -1,0 +1,176 @@
+// bfs_hung.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
+//
+
+#include "pch.h"
+#include <vector>
+#include <queue>
+#include <iostream>
+using namespace std;
+#define __maxNodes 20
+
+struct Edge
+{
+    int from;
+    int to;
+    int weight;
+
+    Edge(int f, int t, int w) :from(f), to(t), weight(w) {}
+};
+
+vector<int> G[__maxNodes]; /* G[i] 存储顶点 i 出发的边的编号 */
+vector<Edge> edges;
+typedef vector<int>::iterator iterator_t;
+int num_nodes;
+int num_left;
+int num_right;
+int num_edges;
+
+int matching[__maxNodes]; /* 存储求解结果 */
+int check[__maxNodes];
+queue<int> Q;// bfs的队列
+int Prev [__maxNodes];
+
+int hung_bfs()
+{
+    int ans = 0;
+    memset(matching, -1, sizeof(matching));
+    memset(check, -1, sizeof(check));
+    for (int i = 0; i < num_left; ++i)
+    {
+        if (matching[i] == -1) //从左边第一个顶点开始，挑选未匹配点进行搜索，寻找增广路
+        {
+            // 清空队列
+            while (!Q.empty()) Q.pop();
+            Q.push(i);//
+            Prev[i] = -1; // 设 i 为路径起点
+            bool flag = false; // 尚未找到增广路
+
+            while (!Q.empty() && !flag) // 只要bfs没有遍历完，且没有找到增广路，就持续遍历下去
+            {
+                int u = Q.front();
+                for (iterator_t ix = G[u].begin(); ix != G[u].end() && !flag; ++ix)
+                {
+                    int v = edges[*ix].to;
+                    if (check[v] != i) // 是不匹配边？
+                    {
+                        check[v] = i;
+                        Q.push(matching[v]);
+                        if (matching[v] >= 0)
+                        { // 此点为匹配点
+                            Prev[matching[v]] = u;
+                        }
+                        else
+                        { // 找到未匹配点，交替路变为增广路
+                            flag = true;
+                            int d = u, e = v;
+                            while (d != -1)
+                            {
+                                int t = matching[d];
+                                matching[d] = e;
+                                matching[e] = d;
+                                d = Prev[d];
+                                e = t;
+                            }
+                        }
+                    }
+                }
+                Q.pop();
+            }
+            if (matching[i] != -1) ++ans;
+        }
+    }
+    return ans;
+}
+
+bool dfs(int u)
+{
+    for (iterator_t i = G[u].begin(); i != G[u].end(); ++i) { // 对 u 的每个邻接点
+        int v = edges[*i].to;
+        if (!check[v]) {     // 要求不在交替路中
+            check[v] = true; // 放入交替路
+            if (matching[v] == -1 || dfs(matching[v])) {
+                // 如果是未盖点，说明交替路为增广路，则交换路径，并返回成功
+                matching[v] = u;
+                matching[u] = v;
+                return true;
+            }
+        }
+    }
+    return false; // 不存在增广路，返回失败
+}
+
+
+
+int hung_dfs()
+{
+    int ans = 0;
+    memset(matching, -1, sizeof(matching));
+    for (int u = 0; u < num_left; ++u) {
+        if (matching[u] == -1) {
+            memset(check, 0, sizeof(check));
+            if (dfs(u))
+                ++ans;
+        }
+    }
+    return ans;
+}
+
+int main()
+{
+    Edge e1(0,4,0);
+    Edge e2(0, 5, 0);
+    Edge e3(1, 5, 0);
+    Edge e4(1, 6, 0);
+    Edge e5(2, 4, 0);
+    Edge e6(2, 5, 0);
+    Edge e7(3, 6, 0);
+
+    Edge e11(4, 0, 0);
+    Edge e12(5, 0, 0);
+    Edge e13(5, 1, 0);
+    Edge e14(6, 1, 0);
+    Edge e15(4, 2, 0);
+    Edge e16(5, 2, 0);
+    Edge e17(6, 3, 0);
+
+    edges.push_back(e1);
+    edges.push_back(e2);
+    edges.push_back(e3);
+    edges.push_back(e4);
+    edges.push_back(e5);
+    edges.push_back(e6);
+    edges.push_back(e7);
+
+    edges.push_back(e11);//index = 8
+    edges.push_back(e12);
+    edges.push_back(e13);
+    edges.push_back(e14);
+    edges.push_back(e15);//12
+    edges.push_back(e16);
+    edges.push_back(e17);
+
+    num_nodes = 8;
+    num_left = 4;
+
+    G[0].push_back(0);
+    G[0].push_back(1);
+    G[1].push_back(2);
+    G[1].push_back(3);
+    G[2].push_back(4);
+    G[2].push_back(5);
+    G[3].push_back(6);
+
+
+    G[4].push_back(8);
+    G[4].push_back(12);
+
+    G[5].push_back(9);
+    G[5].push_back(10);
+    G[5].push_back(13);
+
+    G[6].push_back(11);
+    G[6].push_back(15);
+
+    cout<< hung_dfs();
+    int addd = 0;
+}
